@@ -505,6 +505,30 @@ export function RunFooterView(props: RunFooterViewProps) {
     })
   })
   const statusSections = createMemo(() => statuslineLayout().groups.filter((group) => group.id !== "spinner"))
+  // Claude Code keeps identity on the left and telemetry/actions on the right.
+  const STATUS_LEFT = new Set(["spinner", "status", "escape", "queued", "subagents", "background", "agent", "model"])
+  const joinStatus = (groups: readonly { id: string; parts: ReadonlyArray<{ text: string }> }[]) =>
+    groups
+      .map(
+        (group, index) =>
+          (index === 0 ? "" : group.id === "spinner" ? " " : ` · `) +
+          group.parts.map((part) => part.text).join(""),
+      )
+      .join("")
+  const statusSplit = createMemo(() => {
+    const groups = statusSections()
+    return {
+      left: groups.filter((group) => STATUS_LEFT.has(group.id)),
+      right: groups.filter((group) => !STATUS_LEFT.has(group.id)),
+    }
+  })
+  const statusSplitFits = createMemo(() => {
+    if (props.miniSettings().preset !== "claude") return false
+    if (statusSplit().right.length === 0) return false
+    return (
+      stringWidth(joinStatus(statusSplit().left)) + 2 + stringWidth(joinStatus(statusSplit().right)) <= statusWidth()
+    )
+  })
   const statusColors = createMemo(() => ({
     text: theme().text,
     muted: theme().muted,
@@ -993,20 +1017,65 @@ export function RunFooterView(props: RunFooterViewProps) {
                   </box>
                 </Show>
                 <Show when={statusSections().length > 0}>
-                  <text fg={statusColor()} wrapMode="word" width={statusWidth()} flexShrink={0} height={statusRows()}>
-                    <For each={statusSections()}>
-                      {(section, index) => (
-                        <>
-                          <Show when={index() > 0}>
-                            <span style={{ fg: theme().muted }}>{props.mono ? " - " : " · "}</span>
-                          </Show>
-                          <For each={section.parts}>
-                            {(part) => <span style={{ fg: statusColors()[part.tone] }}>{part.text}</span>}
-                          </For>
-                        </>
-                      )}
-                    </For>
-                  </text>
+                  <Show
+                    when={statusSplitFits()}
+                    fallback={
+                      <text
+                        fg={statusColor()}
+                        wrapMode="word"
+                        width={statusWidth()}
+                        flexShrink={0}
+                        height={statusRows()}
+                      >
+                        <For each={statusSections()}>
+                          {(section, index) => (
+                            <>
+                              <Show when={index() > 0}>
+                                <span style={{ fg: theme().muted }}>{props.mono ? " - " : " · "}</span>
+                              </Show>
+                              <For each={section.parts}>
+                                {(part) => <span style={{ fg: statusColors()[part.tone] }}>{part.text}</span>}
+                              </For>
+                            </>
+                          )}
+                        </For>
+                      </text>
+                    }
+                  >
+                    <box width={statusWidth()} flexDirection="row" gap={0} height={1} flexShrink={0}>
+                      <text fg={statusColor()} wrapMode="none" flexShrink={0}>
+                        <For each={statusSplit().left}>
+                          {(section, index) => (
+                            <>
+                              <Show when={index() > 0}>
+                                <span style={{ fg: theme().muted }}>
+                                  {section.id === "spinner" ? " " : " · "}
+                                </span>
+                              </Show>
+                              <For each={section.parts}>
+                                {(part) => <span style={{ fg: statusColors()[part.tone] }}>{part.text}</span>}
+                              </For>
+                            </>
+                          )}
+                        </For>
+                      </text>
+                      <box flexGrow={1} flexShrink={1} />
+                      <text fg={statusColor()} wrapMode="none" flexShrink={0}>
+                        <For each={statusSplit().right}>
+                          {(section, index) => (
+                            <>
+                              <Show when={index() > 0}>
+                                <span style={{ fg: theme().muted }}>{" · "}</span>
+                              </Show>
+                              <For each={section.parts}>
+                                {(part) => <span style={{ fg: statusColors()[part.tone] }}>{part.text}</span>}
+                              </For>
+                            </>
+                          )}
+                        </For>
+                      </text>
+                    </box>
+                  </Show>
                 </Show>
               </box>
             </Show>

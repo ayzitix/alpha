@@ -285,8 +285,14 @@ renderable in a row with a fixed-width glyph and gives the body a numeric width
 (`surface.width - glyph`), which produces a real hanging indent for wrapped
 lines. Entries are replayed on resize, so widths are recomputed then.
 
-Still open: the right-aligned statusline segments (`model · effort` on the left,
-cost/menu on the right) and an inline `✻ Thinking…` spinner in the transcript.
+Statusline: with the `claude` preset the row is split — identity (spinner,
+agent, model) on the left, telemetry and actions (context, provider, cost,
+menu) on the right, separated by a flex spacer. When the two halves do not fit,
+the row falls back to the single wrapping line used by the default preset.
+
+Still open: tool action lines still use the legacy `$ cmd` / `# Wrote` markers
+(only shell calls got `⏺ Bash(...)`), there is no dim rule around the composer,
+and thinking is not an inline spinner while streaming.
 
 Demo mode (`alpha --demo`) adds frontend-only `/help`, `/permission`,
 `/form`, `/fmt` fixtures in `mini/demo.ts`; they do not exist in a normal
