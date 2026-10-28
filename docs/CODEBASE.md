@@ -346,6 +346,10 @@ cd packages/client && bun run generate
 - No full-screen/alternate-screen UI: `mini` is the only interactive frontend.
 - No self-update path: `upgrade`/`uninstall` are gone on purpose.
 - No embedded web UI: `serve` exposes the HTTP API only.
+- No keyless free tier: the `opencode` provider is still registered for API
+  keys and Console sign-in, but zero-cost models are removed from the catalog
+  in `core/src/plugin/provider/opencode.ts`, so they never reach a picker or a
+  request. Paid `opencode/*` models keep working with a key.
 - Internal package scopes remain `@opencode/*` (cheaper upstream cherry-picks).
 - Runtime paths still use `OPENCODE_*` env vars and `~/.config/opencode`,
   `~/.local/share/opencode` — shared with a normal opencode install.
