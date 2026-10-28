@@ -197,6 +197,7 @@ export type ScrollbackOptions = {
   suppressBackgrounds?: boolean
   shellOutput?: boolean
   mono?: boolean
+  preset?: MiniPreset
 }
 
 type ToolCodeSnapshot = {
@@ -409,7 +410,10 @@ export type RunTuiConfig = Pick<
   "keybinds" | "leader" | "theme" | "mini" | "prompt" | "session" | "cursor" | "animations"
 >
 
+export type MiniPreset = "default" | "claude"
+
 export type MiniSettings = {
+  preset?: MiniPreset
   thinking: "show" | "hide"
   tools: "show" | "hide"
   shell_output: "show" | "hide"
@@ -424,8 +428,8 @@ export type MiniVerbosity = "quiet" | "default" | "everything"
 
 export type MiniSettingChange =
   | {
-      [Key in keyof MiniSettings]: { key: Key; value: MiniSettings[Key] }
-    }[keyof MiniSettings]
+      [Key in Exclude<keyof MiniSettings, "preset">]: { key: Key; value: MiniSettings[Key] }
+    }[Exclude<keyof MiniSettings, "preset">]
   | { key: "verbosity"; value: MiniVerbosity }
 
 // Lifecycle phase of a scrollback entry. "start" opens the entry, "progress"

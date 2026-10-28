@@ -1,6 +1,7 @@
 import { toolEntryBody } from "./tool"
 import { monoPrefix, monoToolText } from "./mono"
 import type { RunEntryBody, ScrollbackOptions, StreamCommit } from "./types"
+import { presetStyle } from "./preset"
 
 export type EntryFlags = {
   startOnNewLine: boolean
@@ -49,17 +50,17 @@ function markdownBody(content: string): RunEntryBody {
   }
 }
 
-function userBody(raw: string, mono: boolean): RunEntryBody {
+function userBody(raw: string, mono: boolean, preset: ReturnType<typeof presetStyle>): RunEntryBody {
   if (!raw.trim()) {
     return RUN_ENTRY_NONE
   }
 
   const lead = raw.match(/^\n+/)?.[0] ?? ""
   const body = lead ? raw.slice(lead.length) : raw
-  return textBody(`${lead}${mono ? ">" : "›"} ${body}`)
+  return textBody(`${lead}${preset.user} ${body}`)
 }
 
-function reasoningBody(raw: string, mono: boolean): RunEntryBody {
+function reasoningBody(raw: string, mono: boolean, preset: ReturnType<typeof presetStyle>): RunEntryBody {
   const clean = raw.replace(/\[REDACTED\]/g, "")
   if (!clean) {
     return RUN_ENTRY_NONE
@@ -69,8 +70,8 @@ function reasoningBody(raw: string, mono: boolean): RunEntryBody {
   const body = lead ? clean.slice(lead.length) : clean
   const mark = "Thinking:"
   if (body.startsWith(mark)) {
-    if (mono) return textBody(`${lead}${mark} ${body.slice(mark.length).trimStart()}`)
-    return codeBody(`${lead}_Thinking:_ ${body.slice(mark.length).trimStart()}`, "markdown")
+    if (mono) return textBody(`${lead}${preset.thinking} ${body.slice(mark.length).trimStart()}`)
+    return codeBody(`${lead}_${preset.thinking}_ ${body.slice(mark.length).trimStart()}`, "markdown")
   }
 
   return mono ? textBody(clean) : codeBody(clean, "markdown")
@@ -195,14 +196,15 @@ export function entryBody(commit: StreamCommit, options?: ScrollbackOptions): Ru
 
   const raw = cleanRunText(commit.text)
   const mono = options?.mono === true
+  const preset = presetStyle(options?.preset, mono)
 
   if (commit.image) {
     const caption = raw.trim() || "Image"
-    return commit.kind === "user" ? userBody(caption, mono) : textBody(monoToolText(caption, mono))
+    return commit.kind === "user" ? userBody(caption, mono, preset) : textBody(monoToolText(caption, mono))
   }
 
   if (commit.kind === "user") {
-    return userBody(raw, mono)
+    return userBody(raw, mono, preset)
   }
 
   if (commit.kind === "tool") {
@@ -233,7 +235,7 @@ export function entryBody(commit: StreamCommit, options?: ScrollbackOptions): Ru
       return commit.interrupted ? textBody("reasoning interrupted") : RUN_ENTRY_NONE
     }
 
-    return reasoningBody(raw, mono)
+    return reasoningBody(raw, mono, preset)
   }
 
   const body = systemBody(raw, commit.phase)

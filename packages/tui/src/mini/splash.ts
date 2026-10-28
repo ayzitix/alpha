@@ -17,7 +17,9 @@ import { Locale } from "../util/locale"
 import { stringWidth } from "../util/string-width"
 import { go } from "../logo"
 import { monoTruncate } from "./mono"
+import { presetStyle } from "./preset"
 import type { RunSplashTheme } from "./theme"
+import type { MiniPreset } from "./types"
 
 const SPLASH_TITLE_LIMIT = 50
 const SPLASH_TITLE_FALLBACK = "Untitled session"
@@ -31,6 +33,7 @@ type SplashInput = {
 type SplashWriterInput = SplashInput & {
   theme: RunSplashTheme
   showSession?: boolean
+  preset?: MiniPreset
 }
 
 export type SplashMeta = {
@@ -249,6 +252,7 @@ export function entrySplash(input: {
   version: string
   detail?: string
   mono?: boolean
+  preset?: MiniPreset
   theme: RunSplashTheme
 }): ScrollbackWriter {
   return (ctx) => {
@@ -273,7 +277,7 @@ export function entrySplash(input: {
   }
 }
 
-export function entrySplashLayout(input: { width: number; version: string; detail?: string; mono?: boolean }) {
+export function entrySplashLayout(input: { width: number; version: string; detail?: string; mono?: boolean; preset?: MiniPreset }) {
   const detail = input.detail ?? ""
   const segments = detail.split(/[/\\]/).filter(Boolean)
   const leaf = segments.at(-1) ?? detail
@@ -287,7 +291,7 @@ export function entrySplashLayout(input: { width: number; version: string; detai
     .filter((path) => stringWidth(path) < stringWidth(detail))
   let layout = { label: Locale.takeWidth("alpha", input.width), version: "", path: "", metadata: "" }
   const stages = [
-    { label: `${input.mono ? "[O]" : "▪"} alpha` },
+    { label: `${presetStyle(input.preset, input.mono).splashMark} alpha` },
     ...(leaf ? [{ path: leaf }] : []),
     ...(input.version ? [{ version: input.version }] : []),
     ...paths.concat(detail ? [detail] : []).map((path) => ({ path })),

@@ -47,6 +47,7 @@ describe("run runtime boot", () => {
       splash: "show",
       work_spinner: "block-soft-slide",
       mono: false,
+      preset: "default",
     })
     expect(
       resolveMiniSettings({
@@ -70,6 +71,7 @@ describe("run runtime boot", () => {
       splash: "hide",
       work_spinner: "block-low-comet",
       mono: true,
+      preset: "default",
     })
   })
 

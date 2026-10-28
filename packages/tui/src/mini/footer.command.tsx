@@ -75,7 +75,7 @@ type SubagentEntry = PanelEntry & {
 }
 
 type SettingEntry = PanelEntry & {
-  key: keyof MiniSettings | "verbosity"
+  key: Exclude<keyof MiniSettings, "preset"> | "verbosity"
 }
 
 const PANEL_PAD = 2

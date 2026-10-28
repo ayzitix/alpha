@@ -12,10 +12,11 @@ import {
 import { For, Match, Switch, createMemo, onCleanup } from "solid-js"
 import { entryBody, entryFlags } from "./entry.body"
 import { monoMarkdownRenderable, monoMarkdownTableOptions } from "./mono"
+import { presetStyle } from "./preset"
 import { entryColor, entryLook, entrySyntax } from "./scrollback.shared"
 import { toolFiletype, toolStructuredFinal } from "./tool"
 import { RUN_THEME_FALLBACK, transparent, type RunTheme } from "./theme"
-import type { EntryLayout, RunEntryBody, ScrollbackOptions, StreamCommit, TurnSummary } from "./types"
+import type { EntryLayout, MiniPreset, RunEntryBody, ScrollbackOptions, StreamCommit, TurnSummary } from "./types"
 import { todoMarker } from "../util/todo"
 import { PatchDiff } from "../component/patch-diff"
 
@@ -91,6 +92,7 @@ export function RunEntryContent(props: {
   let fallback: SyntaxStyle | undefined
   const theme = createMemo(() => props.theme ?? RUN_THEME_FALLBACK)
   const body = createMemo(() => props.body ?? entryBody(props.commit, props.opts))
+  const preset = createMemo(() => presetStyle(props.opts?.preset, props.opts?.mono === true))
   const style = createMemo(() => entryLook(props.commit, theme().entry))
   const syntax = () => theme().block.syntax ?? (fallback ??= entrySyntax(RUN_THEME_FALLBACK, renderer.nativeScene))
   onCleanup(() => {
@@ -256,7 +258,7 @@ export function RunEntryContent(props: {
       <Match when={todo_snapshot()}>
         <box width="100%" flexDirection="column" gap={1}>
           <text width="100%" wrapMode="word" fg={theme().block.muted}>
-            # Todos
+            {preset().section}Todos
           </text>
           <box width="100%" flexDirection="column" gap={0}>
             {todo_snapshot()!.items.map((item) => (
@@ -282,7 +284,7 @@ export function RunEntryContent(props: {
       <Match when={question_snapshot()}>
         <box width="100%" flexDirection="column" gap={1}>
           <text width="100%" wrapMode="word" fg={theme().block.muted}>
-            # Questions
+            {preset().section}Questions
           </text>
           <box width="100%" flexDirection="column" gap={1}>
             {question_snapshot()!.items.map((item) => (
@@ -362,12 +364,15 @@ export function spacerWriter(): ScrollbackWriter {
   })
 }
 
-export function turnSummaryWriter(input: TurnSummary & { theme: RunTheme; mono?: boolean }) {
+export function turnSummaryWriter(input: TurnSummary & { theme: RunTheme; mono?: boolean; preset?: MiniPreset }) {
   return createScrollbackWriter(
     () => (
       <box width="100%" height={1}>
         <text wrapMode="none" truncate>
-          <span style={{ fg: input.theme.block.text }}>{input.agent}</span>
+          <span style={{ fg: input.theme.block.text }}>
+            {presetStyle(input.preset, input.mono).summary}
+            {input.agent}
+          </span>
           <span style={{ fg: input.theme.block.muted }}>
             {" "}
             {input.mono ? "-" : "·"} {input.model} {input.mono ? "-" : "·"} {input.duration}

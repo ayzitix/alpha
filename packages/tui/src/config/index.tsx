@@ -227,6 +227,9 @@ export const Info = Schema.Struct({
       mono: Schema.optional(Schema.Boolean).annotate({
         description: "Use monochrome ASCII output",
       }),
+      preset: Schema.optional(Schema.Literals(["default", "claude"])).annotate({
+        description: "Transcript glyph preset (default: default)",
+      }),
       replay: Schema.optional(Schema.Boolean).annotate({
         description: "Restore session history on resume and terminal resize",
       }),

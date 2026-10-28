@@ -36,6 +36,7 @@ import { Keymap } from "../context/keymap"
 import type { ClipboardService } from "../context/clipboard"
 import { modelInfo } from "./variant.shared"
 import { monoShortcut } from "./mono"
+import { presetStyle } from "./preset"
 import { stringWidth } from "../util/string-width"
 import { formatContextUsage } from "../util/session"
 import { errorMessage } from "../util/error"
@@ -132,7 +133,7 @@ export function RunFooterView(props: RunFooterViewProps) {
   const width = createMemo(() => term().width)
   const startup = createMemo(() => {
     const value = props.startup?.()
-    return value ? entrySplashLayout({ ...value, width: width(), mono: props.mono }) : undefined
+    return value ? entrySplashLayout({ ...value, width: width(), mono: props.mono, preset: props.miniSettings().preset }) : undefined
   })
   const active = createMemo<FooterView>(() => props.view?.() ?? { type: "prompt" })
   const subagent = createMemo<FooterSubagentState>(() => {
@@ -500,7 +501,7 @@ export function RunFooterView(props: RunFooterViewProps) {
       cost: footerDetails() ? cost() : undefined,
       provider: info?.provider,
       menu: commandHint(),
-      spinner: busy() ? (props.mono ? "*" : "\u25aa") : undefined,
+      spinner: busy() ? presetStyle(props.miniSettings().preset, props.mono).spinner : undefined,
     })
   })
   const statusSections = createMemo(() => statuslineLayout().groups.filter((group) => group.id !== "spinner"))

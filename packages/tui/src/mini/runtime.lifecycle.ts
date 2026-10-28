@@ -202,6 +202,7 @@ export async function createRuntimeLifecycle(input: LifecycleInput): Promise<Lif
           theme: theme.splash,
           detail: directoryLabel(input.getDirectory(), input.host.paths.home),
           mono,
+          preset: miniSettings.preset,
         })
       : undefined,
   )
@@ -330,6 +331,7 @@ export async function createRuntimeLifecycle(input: LifecycleInput): Promise<Lif
             session_id: sessionID,
             theme: footer.currentTheme().splash,
             mono: footer.currentMiniSettings().mono,
+            preset: footer.currentMiniSettings().preset,
           }),
         )
         await renderer.idle().catch(() => {})
@@ -385,6 +387,7 @@ export async function createRuntimeLifecycle(input: LifecycleInput): Promise<Lif
           theme: footer.currentTheme().splash,
           detail: directoryLabel(input.getDirectory(), input.host.paths.home),
           mono: footer.currentMiniSettings().mono,
+          preset: footer.currentMiniSettings().preset,
         }),
       )
       renderer.requestRender()

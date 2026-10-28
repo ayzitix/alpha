@@ -28,7 +28,8 @@ import {
 import { formatPath } from "../util/path-format"
 import { isRecord } from "../util/record"
 import { parseTodos, todoMarker } from "../util/todo"
-import type { RunEntryBody, StreamCommit, ToolSnapshot } from "./types"
+import type { RunEntryBody, ScrollbackOptions, StreamCommit, ToolSnapshot } from "./types"
+import { presetStyle } from "./preset"
 
 export { canonicalToolName } from "../util/tool-display"
 
@@ -1313,11 +1314,11 @@ function shellOutput(command: string, raw: string): string | undefined {
 export function toolEntryBody(
   commit: StreamCommit,
   raw: string,
-  options?: { shellOutput?: boolean },
+  options?: ScrollbackOptions,
 ): RunEntryBody | undefined {
   if (commit.shell) {
     if (commit.phase === "start") {
-      return textBody(`$ ${commit.shell.command}`)
+      return textBody(presetStyle(options?.preset, options?.mono === true).shell(commit.shell.command))
     }
 
     if (commit.phase === "progress") {

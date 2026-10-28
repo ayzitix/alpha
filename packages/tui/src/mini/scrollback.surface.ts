@@ -20,7 +20,7 @@ import { entryColor, entryLook, entrySyntax } from "./scrollback.shared"
 import { turnSummaryCommit } from "./turn-summary"
 import { entryWriter, sameEntryGroup, separatorRows, spacerWriter, turnSummaryWriter } from "./scrollback.writer"
 import { type RunTheme } from "./theme"
-import type { RunEntryBody, StreamCommit } from "./types"
+import type { MiniPreset, RunEntryBody, StreamCommit } from "./types"
 
 type ActiveBody = Exclude<RunEntryBody, { type: "none" | "structured" }>
 
@@ -94,6 +94,7 @@ export class RunScrollbackStream {
   private wrote: boolean
   private shellOutput: () => boolean
   private mono: boolean
+  private preset: MiniPreset
   private imagePreview: boolean
   private destroyed = false
   private pendingThemes: RunTheme[] = []
@@ -108,6 +109,7 @@ export class RunScrollbackStream {
       onThemeRelease?: (theme: RunTheme) => void
       shellOutput?: () => boolean
       mono?: boolean
+      preset?: MiniPreset
       imagePreview?: boolean
     } = {},
   ) {
@@ -115,6 +117,7 @@ export class RunScrollbackStream {
     this.wrote = options.wrote ?? false
     this.shellOutput = options.shellOutput ?? (() => true)
     this.mono = options.mono ?? false
+    this.preset = options.preset ?? "default"
     this.imagePreview = options.imagePreview ?? false
     this.onThemeRelease = options.onThemeRelease
   }
@@ -396,7 +399,7 @@ export class RunScrollbackStream {
       await image.loadPromise
       if (surface.isDestroyed) return
 
-      const body = entryBody(commit, { mono: this.mono })
+      const body = entryBody(commit, { mono: this.mono, preset: this.preset })
       if (body.type !== "text") return
       const style = entryLook(commit, this.theme.entry)
       const caption = new TextRenderable(surface.renderContext, {
@@ -453,7 +456,9 @@ export class RunScrollbackStream {
 
     if (commit.summary) {
       this.writeSpacer(1)
-      this.renderer.writeToScrollback(turnSummaryWriter({ ...commit.summary, theme: this.theme, mono: this.mono }))
+      this.renderer.writeToScrollback(
+        turnSummaryWriter({ ...commit.summary, theme: this.theme, mono: this.mono, preset: this.preset }),
+      )
       this.markRendered(commit)
       this.tail = commit
       return
@@ -465,7 +470,7 @@ export class RunScrollbackStream {
       return
     }
 
-    const body = entryBody(commit, { shellOutput: this.shellOutput(), mono: this.mono })
+    const body = entryBody(commit, { shellOutput: this.shellOutput(), mono: this.mono, preset: this.preset })
     if (body.type === "none") {
       if (entryDone(commit)) {
         this.markRendered(await this.finishActive(false))
@@ -500,7 +505,7 @@ export class RunScrollbackStream {
         commit,
         body: staticBody(commit, body, spaced),
         theme: this.theme,
-        opts: { mono: this.mono },
+        opts: { mono: this.mono, preset: this.preset },
       }),
     )
     this.markRendered(commit)
