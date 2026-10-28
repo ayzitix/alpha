@@ -1,0 +1,16 @@
+alpha
+=====
+
+This product includes software derived from opencode
+(https://github.com/anomalyco/opencode), Copyright (c) 2025 opencode,
+licensed under the MIT License.
+
+The interactive terminal frontend under packages/tui/src/mini is a fork of
+opencode's `mini` interface. The agent runtime, server, provider integrations
+and client packages are likewise derived from opencode.
+
+Removed in this fork: the full-screen TUI, desktop app, web app, console,
+documentation site, deployment infrastructure and release tooling.
+
+The MIT license text and the original copyright notice are preserved in
+LICENSE.
