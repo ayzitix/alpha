@@ -154,5 +154,11 @@
     "app-builder-lib@26.15.7": "patches/app-builder-lib@26.15.7.patch",
     "electron-updater@6.8.9": "patches/electron-updater@6.8.9.patch",
     "@pierre/trees@1.0.0-beta.6": "patches/@pierre%2Ftrees@1.0.0-beta.6.patch"
+  },
+  "upstream": {
+    "repository": "https://github.com/anomalyco/opencode",
+    "branch": "dev",
+    "commit": "62ae125d943fce8d5fac6e72304d1b68d92becc8",
+    "version": "2.2.0"
   }
 }

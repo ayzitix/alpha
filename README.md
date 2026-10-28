@@ -75,3 +75,7 @@ bun run typecheck                         # from the repo root
 copyright the opencode contributors, licensed under MIT. The original license
 and copyright notice are preserved in [`LICENSE`](./LICENSE) and
 [`NOTICE`](./NOTICE).
+
+Fork base: opencode `dev` @ `62ae125d943f` (2026-10-28, package version 2.2.0).
+See [`docs/UPSTREAM.md`](./docs/UPSTREAM.md) for the exact base and how to track
+upstream changes.
