@@ -36,16 +36,13 @@ const IS_PREVIEW = CHANNEL !== "latest"
 const VERSION = (() => {
   if (env.OPENCODE_VERSION) return env.OPENCODE_VERSION
   if (!IS_PREVIEW) throw new Error("OPENCODE_VERSION is required for latest-channel builds")
-  return `0.0.0-${CHANNEL}-${previewBuildNumber()}`
+  // Local/preview builds report the fork's package version instead of a
+  // synthetic 0.0.0-<channel>-<date>. Downstream gates parse the version out of
+  // the client identity (opencode/<channel>/<version>/<name>) and reject
+  // non-semver or 0.0.0 strings, so a synthetic build id makes the client look
+  // like an ancient release.
+  return rootPkg.version
 })()
-
-function previewBuildNumber() {
-  const runNumber = process.env["GITHUB_RUN_NUMBER"]
-  if (!runNumber) return new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")
-  const runAttempt = process.env["GITHUB_RUN_ATTEMPT"]
-  if (runAttempt && runAttempt !== "1") return `${runNumber}.${runAttempt}`
-  return runNumber
-}
 
 const bot = ["actions-user", "opencode", "opencode-agent[bot]"]
 const teamPath = path.resolve(import.meta.dir, "../../../.github/TEAM_MEMBERS")

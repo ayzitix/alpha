@@ -48,3 +48,23 @@ Merge strategy:
 - Do not merge upstream `packages/app`, `packages/desktop`, `packages/web`,
   `packages/cli/src/commands/handlers/{upgrade,uninstall}.ts` or the web-UI
   asset plumbing back in.
+
+## Version stamping
+
+Local builds report the root `package.json` version (currently `2.2.0`), not a
+synthetic `0.0.0-<channel>-<date>` id. `packages/script/src/index.ts` falls back
+to `rootPkg.version` when `OPENCODE_VERSION` is unset.
+
+This matters because the Console/Zen gateway reads the client identity built by
+`App.useragent` (`opencode/<channel>/<version>/<name>`) and rejects clients whose
+version is not a real semver at or above its minimum. With a `0.0.0-main-*`
+string every free-tier request fails with HTTP 426:
+
+```
+OpenCode 1.18.0 or newer is required to use the free tier
+```
+
+That check is server-side and unrelated to the mini frontend. Note that
+open-code's free tier is documented as available only to official OpenCode
+clients, so a fork should not depend on it; use your own provider credentials
+or a paid model.
