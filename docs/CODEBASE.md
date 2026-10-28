@@ -225,6 +225,45 @@ Everything the transport emits is one of two things:
 If you add a new kind of output, you touch `stream-v2.transport.ts` (produce it),
 `types.ts` (type it), `scrollback.writer.tsx` / `tool.ts` (render it).
 
+### 5.6 Slash commands
+
+There are two kinds, and they are implemented in different places.
+
+**Handled locally by the frontend** (no server round trip):
+
+| Command | What it does | Where |
+|---|---|---|
+| `/new` | starts a new session (new session id, same directory) | `runtime.queue.ts` → `onNewSession`, matched by `isNewCommand` in `prompt.shared.ts` |
+| `/compact` | compacts older context; shows "compacting session" while it runs | `runtime.queue.ts` → `onCompact` |
+| `/exit`, `/quit`, `/q`, `:q` | closes `alpha` | `runtime.queue.ts`, `EXIT_COMMANDS` in `prompt.shared.ts` |
+| `/editor` | composes the prompt in `$VISUAL`/`$EDITOR` and submits it | menu action in `footer.prompt.tsx`, `openEditor` via `cli/src/mini-host.ts` |
+| `/settings` | opens the transcript settings panel (verbosity, footer, thinking…) | menu action + typed handler in `footer.prompt.tsx` |
+| `/clear` | clears the terminal screen | command-palette action only (`footer.command.tsx`) |
+
+**Sent to the server** as a command invocation, then executed by
+`core/src/session/command.ts` → `Command.Service`:
+
+| Command | What it does | Registered in |
+|---|---|---|
+| `/init` | guided `AGENTS.md` setup: sends a built-in prompt to the model | `core/src/plugin/command.ts` |
+| `/review [commit\|branch\|pr]` | reviews uncommitted changes, a commit, a branch or a PR | `core/src/plugin/command.ts` |
+| `/<server>:<prompt>` | runs an MCP prompt and submits its messages as the prompt | `core/src/plugin/command.ts` (from `Mcp.prompts()`) |
+| any user command | markdown commands from config (`command/*.md`, `command` key) with `$ARGUMENTS`, `agent`, `model`, `subtask` | `core/src/config/plugin/command.ts` |
+
+Unknown commands are rejected by the server with `Command.NotFoundError`.
+
+Demo mode (`alpha --demo`) adds frontend-only `/help`, `/permission`,
+`/form`, `/fmt` fixtures in `mini/demo.ts`; they do not exist in a normal
+session.
+
+To add a command:
+
+- **no code** — drop a markdown file in the project's command directory;
+- **built-in** — register it in `core/src/plugin/command.ts` with
+  `ctx.command.transform((editor) => editor.add({ name, description, execute }))`;
+- **client-side** — intercept it in `runtime.queue.ts` and add the entry to
+  `slashOptions` in `footer.prompt.tsx`.
+
 ---
 
 ## 6. `packages/server`
