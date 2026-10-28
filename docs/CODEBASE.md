@@ -190,6 +190,7 @@ This is where the visible behaviour of `alpha` lives. Files, grouped by job:
 | `tool.ts` | tool rendering: paths, headers, inline info, scroll bodies, snapshots |
 | `tool.public.ts` | the small stable surface for other packages (`readDisplayText`, `toolInlineInfo`, …) |
 | `mono.ts` | ASCII/monochrome fallbacks for terminals without glyph support |
+| `preset.ts` | visual presets (`default`, `claude`): leading glyphs, section labels, shell prefix, spinner, splash mark. Selected with `mini.preset`; mono always degrades a preset to ASCII |
 | `theme.ts` | terminal theme resolution (light/dark, palette probing) |
 | `splash.ts` | entry/exit splash, including the `alpha -s <id>` resume command |
 | `demo.ts` | the `--demo` fixtures (`/fmt`, `/permission`, `/question`) |
@@ -252,6 +253,29 @@ There are two kinds, and they are implemented in different places.
 | any user command | markdown commands from config (`command/*.md`, `command` key) with `$ARGUMENTS`, `agent`, `model`, `subtask` | `core/src/config/plugin/command.ts` |
 
 Unknown commands are rejected by the server with `Command.NotFoundError`.
+
+## 5.7 Presets
+
+`mini.preset` switches the transcript chrome without touching layout:
+
+| | `default` | `claude` |
+|---|---|---|
+| user prompt | `›` | `⏺` |
+| reasoning | `Thinking:` | `✻ Thinking…` |
+| section headings | `# Todos` | `· Todos` |
+| shell tool | `$ cmd` | `⏺ Bash(cmd)` |
+| footer spinner | `▪` | `✻` |
+| splash mark | `▪ alpha` | `⏺ alpha` |
+| turn summary | `alpha · model · 1s` | `✻ alpha · model · 1s` |
+
+Config only (not yet in the `/settings` panel), requires a restart:
+
+```json
+{ "mini": { "preset": "claude" } }
+```
+
+Mono mode always wins: every preset degrades to ASCII (`>`, `Thinking:`,
+`$ cmd`, `*`, `[O]`).
 
 Demo mode (`alpha --demo`) adds frontend-only `/help`, `/permission`,
 `/form`, `/fmt` fixtures in `mini/demo.ts`; they do not exist in a normal
