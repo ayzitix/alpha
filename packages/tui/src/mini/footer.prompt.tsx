@@ -104,7 +104,7 @@ type Auto = RunFooterMenuItem & {
 type SlashOption = RunFooterMenuItem & {
   kind: "slash"
   name: string
-  action?: "editor" | "settings"
+  action?: "editor" | "settings" | "model"
 }
 
 type PromptOption = Auto | SlashOption
@@ -137,6 +137,7 @@ type PromptInput = {
   onExitRequest?: () => boolean
   onExit: () => void
   onSettings: () => void
+  onModel: () => void
   onRows: (rows: number) => void
   onStatus: (text: string) => void
 }
@@ -336,6 +337,12 @@ export function RunPromptBody(props: {
   )
 }
 
+// `/model` opens the model picker; trailing text is ignored so `/model x` does
+// not fall through to the server as an unknown command.
+export function isModelCommand(input: string): boolean {
+  return /^\/model(?:\s|$)/.test(input.trim().toLowerCase())
+}
+
 export function createPromptState(input: PromptInput): PromptState {
   const renderer = useRenderer()
   const term = useTerminalDimensions()
@@ -521,6 +528,13 @@ export function createPromptState(input: PromptInput): PromptState {
         description: "configure Mini transcript output",
       } satisfies SlashOption,
       { kind: "slash", name: "new", display: "/new", description: "start a new session" } satisfies SlashOption,
+      {
+        kind: "slash",
+        action: "model" as const,
+        name: "model",
+        display: "/model",
+        description: "switch model",
+      } satisfies SlashOption,
       {
         kind: "slash",
         name: "compact",
@@ -1047,6 +1061,12 @@ export function createPromptState(input: PromptInput): PromptState {
         return
       }
 
+      if (next.action === "model" && !shell()) {
+        cancelAutocomplete()
+        input.onModel()
+        return
+      }
+
       const cursor = area.cursorOffset
       const head = parseSlashHead(area.plainText)
       const local = !shell() && (next.name === "new" || isExitCommand(`/${next.name}`))
@@ -1386,7 +1406,8 @@ export function createPromptState(input: PromptInput): PromptState {
         isNewCommand(next.text) ||
         isCompactCommand(next.text) ||
         isExitCommand(next.text) ||
-        next.text.trim().toLowerCase() === "/settings")
+        next.text.trim().toLowerCase() === "/settings" ||
+        isModelCommand(next.text))
     ) {
       input.onStatus("this prompt cannot be queued")
       return
@@ -1399,6 +1420,12 @@ export function createPromptState(input: PromptInput): PromptState {
     if (!command && next.mode !== "shell" && next.text.trim().toLowerCase() === "/settings") {
       resetDraft()
       input.onSettings()
+      return
+    }
+
+    if (!command && next.mode !== "shell" && isModelCommand(next.text)) {
+      resetDraft()
+      input.onModel()
       return
     }
 

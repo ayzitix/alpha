@@ -238,6 +238,7 @@ There are two kinds, and they are implemented in different places.
 | `/exit`, `/quit`, `/q`, `:q` | closes `alpha` | `runtime.queue.ts`, `EXIT_COMMANDS` in `prompt.shared.ts` |
 | `/editor` | composes the prompt in `$VISUAL`/`$EDITOR` and submits it | menu action in `footer.prompt.tsx`, `openEditor` via `cli/src/mini-host.ts` |
 | `/settings` | opens the transcript settings panel (verbosity, footer, thinking…) | menu action + typed handler in `footer.prompt.tsx` |
+| `/model` | opens the model picker (same one as the `ctrl+p` menu); trailing text is ignored | `isModelCommand` + `onModel` in `footer.prompt.tsx`, wired to `openModel` in `footer.view.tsx` |
 | `/clear` | clears the terminal screen | command-palette action only (`footer.command.tsx`) |
 
 **Sent to the server** as a command invocation, then executed by
