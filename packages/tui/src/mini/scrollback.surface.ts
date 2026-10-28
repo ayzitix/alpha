@@ -4,6 +4,7 @@
 // surfaces keep streaming markdown/code layout stable and wait for image loads
 // before their snapshots enter scrollback.
 import {
+  BoxRenderable,
   CodeRenderable,
   ImageRenderable,
   MarkdownRenderable,
@@ -24,15 +25,6 @@ import { type RunTheme } from "./theme"
 import type { MiniPreset, RunEntryBody, StreamCommit } from "./types"
 
 type ActiveBody = Exclude<RunEntryBody, { type: "none" | "structured" }>
-
-function gutterFirstLine(text: string, mark: string): string {
-  const lines = text.split("\n")
-  const index = lines.findIndex((line) => line.trim().length > 0)
-  if (index === -1) return text
-  if (/^(#{1,6}\s|[-*+]\s|>\s|\d+\.\s|```|\||!\[)/.test(lines[index]!.trimStart())) return text
-  lines[index] = mark + lines[index]
-  return lines.join("\n")
-}
 
 type ActiveEntry = {
   body: ActiveBody
@@ -105,7 +97,6 @@ export class RunScrollbackStream {
   private shellOutput: () => boolean
   private mono: boolean
   private preset: MiniPreset
-  private guttered = false
   private imagePreview: boolean
   private destroyed = false
   private pendingThemes: RunTheme[] = []
@@ -194,13 +185,19 @@ export class RunScrollbackStream {
       startOnNewLine: entryFlags(commit).startOnNewLine,
     })
     const style = entryLook(commit, this.theme.entry)
+    const preset = presetStyle(this.preset, this.mono)
+    const mark =
+      commit.kind === "assistant" ? preset.assistant : commit.kind === "tool" && body.type === "text" ? preset.result : ""
+    // A numeric width keeps the body from overlapping the gutter; entries are
+    // replayed on resize, so the width is recomputed then.
+    const width = mark ? Math.max(1, surface.width - mark.length) : "100%"
     const syntax = body.type === "text" ? undefined : entrySyntax(this.theme, surface.renderContext.nativeScene)
     const treeSitterClient = body.type === "text" ? undefined : (this.treeSitterClient ??= getTreeSitterClient())
     const renderable =
       body.type === "text"
         ? new TextRenderable(surface.renderContext, {
             content: "",
-            width: "100%",
+            width,
             wrapMode: "word",
             fg: style.fg,
             attributes: style.attrs,
@@ -210,7 +207,7 @@ export class RunScrollbackStream {
               content: "",
               filetype: body.filetype,
               syntaxStyle: syntax!,
-              width: "100%",
+              width,
               wrapMode: "word",
               drawUnstyledText: false,
               streaming: true,
@@ -220,7 +217,7 @@ export class RunScrollbackStream {
           : new MarkdownRenderable(surface.renderContext, {
               content: "",
               syntaxStyle: syntax!,
-              width: "100%",
+              width,
               streaming: true,
               internalBlockMode: "top-level",
               tableOptions: this.mono ? monoMarkdownTableOptions : { widthMode: "content" },
@@ -229,7 +226,27 @@ export class RunScrollbackStream {
             })
 
     if (this.mono && renderable instanceof MarkdownRenderable) monoMarkdownRenderable(renderable)
-    surface.root.add(renderable)
+    if (mark) {
+      const row = new BoxRenderable(surface.renderContext, {
+        width: "100%",
+        flexDirection: "row",
+        gap: 0,
+        flexShrink: 0,
+      })
+      row.add(
+        new TextRenderable(surface.renderContext, {
+          content: mark,
+          width: mark.length,
+          wrapMode: "none",
+          flexShrink: 0,
+          fg: this.theme.block.muted,
+        }),
+      )
+      row.add(renderable)
+      surface.root.add(row)
+    } else {
+      surface.root.add(renderable)
+    }
 
     const rows = separatorRows(this.rendered, commit, body)
 
@@ -460,7 +477,6 @@ export class RunScrollbackStream {
   public async append(commit: StreamCommit): Promise<void> {
     if (this.destroyed || this.renderer.isDestroyed) return
     const same = sameEntryGroup(this.tail, commit)
-    if (!same) this.guttered = false
     if (!same || commit.image) {
       this.markRendered(await this.finishActive(false))
     }
@@ -482,7 +498,7 @@ export class RunScrollbackStream {
       return
     }
 
-    const body = this.gutter(commit, entryBody(commit, { shellOutput: this.shellOutput(), mono: this.mono, preset: this.preset }))
+    const body = entryBody(commit, { shellOutput: this.shellOutput(), mono: this.mono, preset: this.preset })
     if (body.type === "none") {
       if (entryDone(commit)) {
         this.markRendered(await this.finishActive(false))
@@ -522,24 +538,6 @@ export class RunScrollbackStream {
     )
     this.markRendered(commit)
     this.tail = commit
-  }
-
-  // One gutter per entry: streamed entries arrive as deltas, and a new entry is
-  // detected by the commit grouping above, not by the phase on the commit.
-  private gutter(commit: StreamCommit, body: RunEntryBody): RunEntryBody {
-    if (this.guttered || body.type === "none" || body.type === "structured") return body
-    const style = presetStyle(this.preset, this.mono)
-    const mark =
-      commit.kind === "assistant"
-        ? style.assistant
-        : commit.kind === "tool" && body.type === "text"
-          ? style.result
-          : ""
-    if (!mark) return body
-    const content = gutterFirstLine(body.content, mark)
-    if (content === body.content) return body
-    this.guttered = true
-    return { ...body, content }
   }
 
   private resetActive(): void {

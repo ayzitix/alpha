@@ -280,10 +280,13 @@ Config only (not yet in the `/settings` panel), requires a restart:
 Mono mode always wins: every preset degrades to ASCII (`>`, `Thinking:`,
 `$ cmd`, `*`, `[O]`).
 
-The gutter is applied once per entry by `RunScrollbackStream.gutter()`, after
-the commit is grouped into an entry. Known gaps: wrapped lines are not hanging
-indented yet, and a streamed entry whose first chunk is a heading/table/list
-skips the bullet instead of moving it to the first paragraph.
+The gutter is structural: `RunScrollbackStream.createEntry` wraps the entry
+renderable in a row with a fixed-width glyph and gives the body a numeric width
+(`surface.width - glyph`), which produces a real hanging indent for wrapped
+lines. Entries are replayed on resize, so widths are recomputed then.
+
+Still open: the right-aligned statusline segments (`model · effort` on the left,
+cost/menu on the right) and an inline `✻ Thinking…` spinner in the transcript.
 
 Demo mode (`alpha --demo`) adds frontend-only `/help`, `/permission`,
 `/form`, `/fmt` fixtures in `mini/demo.ts`; they do not exist in a normal
