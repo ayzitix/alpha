@@ -16,6 +16,7 @@ import {
 } from "@opentui/core"
 import { entryBody, entryCanStream, entryDone, entryFlags } from "./entry.body"
 import { monoMarkdownRenderable, monoMarkdownTableOptions } from "./mono"
+import { presetStyle } from "./preset"
 import { entryColor, entryLook, entrySyntax } from "./scrollback.shared"
 import { turnSummaryCommit } from "./turn-summary"
 import { entryWriter, sameEntryGroup, separatorRows, spacerWriter, turnSummaryWriter } from "./scrollback.writer"
@@ -23,6 +24,15 @@ import { type RunTheme } from "./theme"
 import type { MiniPreset, RunEntryBody, StreamCommit } from "./types"
 
 type ActiveBody = Exclude<RunEntryBody, { type: "none" | "structured" }>
+
+function gutterFirstLine(text: string, mark: string): string {
+  const lines = text.split("\n")
+  const index = lines.findIndex((line) => line.trim().length > 0)
+  if (index === -1) return text
+  if (/^(#{1,6}\s|[-*+]\s|>\s|\d+\.\s|```|\||!\[)/.test(lines[index]!.trimStart())) return text
+  lines[index] = mark + lines[index]
+  return lines.join("\n")
+}
 
 type ActiveEntry = {
   body: ActiveBody
@@ -95,6 +105,7 @@ export class RunScrollbackStream {
   private shellOutput: () => boolean
   private mono: boolean
   private preset: MiniPreset
+  private guttered = false
   private imagePreview: boolean
   private destroyed = false
   private pendingThemes: RunTheme[] = []
@@ -449,6 +460,7 @@ export class RunScrollbackStream {
   public async append(commit: StreamCommit): Promise<void> {
     if (this.destroyed || this.renderer.isDestroyed) return
     const same = sameEntryGroup(this.tail, commit)
+    if (!same) this.guttered = false
     if (!same || commit.image) {
       this.markRendered(await this.finishActive(false))
     }
@@ -470,7 +482,7 @@ export class RunScrollbackStream {
       return
     }
 
-    const body = entryBody(commit, { shellOutput: this.shellOutput(), mono: this.mono, preset: this.preset })
+    const body = this.gutter(commit, entryBody(commit, { shellOutput: this.shellOutput(), mono: this.mono, preset: this.preset }))
     if (body.type === "none") {
       if (entryDone(commit)) {
         this.markRendered(await this.finishActive(false))
@@ -510,6 +522,24 @@ export class RunScrollbackStream {
     )
     this.markRendered(commit)
     this.tail = commit
+  }
+
+  // One gutter per entry: streamed entries arrive as deltas, and a new entry is
+  // detected by the commit grouping above, not by the phase on the commit.
+  private gutter(commit: StreamCommit, body: RunEntryBody): RunEntryBody {
+    if (this.guttered || body.type === "none" || body.type === "structured") return body
+    const style = presetStyle(this.preset, this.mono)
+    const mark =
+      commit.kind === "assistant"
+        ? style.assistant
+        : commit.kind === "tool" && body.type === "text"
+          ? style.result
+          : ""
+    if (!mark) return body
+    const content = gutterFirstLine(body.content, mark)
+    if (content === body.content) return body
+    this.guttered = true
+    return { ...body, content }
   }
 
   private resetActive(): void {

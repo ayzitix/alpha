@@ -14,6 +14,12 @@ export type PresetStyle = {
   readonly thinking: string
   /** Prefix for section headings such as Todos/Questions. */
   readonly section: string
+  /** Gutter in front of assistant text (hanging indent). */
+  readonly assistant: string
+  /** Gutter in front of a tool result block. */
+  readonly result: string
+  /** Glyph used as the composer rail. */
+  readonly promptRail: string
   /** First line of a shell tool call. */
   readonly shell: (command: string) => string
   /** Footer spinner glyph. */
@@ -30,6 +36,9 @@ const styles: Record<MiniPreset, PresetStyle> = {
     user: "›",
     thinking: "Thinking:",
     section: "# ",
+    assistant: "",
+    result: "",
+    promptRail: "┃",
     shell: (command) => `$ ${command}`,
     spinner: "▪",
     splashMark: "▪",
@@ -40,6 +49,9 @@ const styles: Record<MiniPreset, PresetStyle> = {
     user: "⏺",
     thinking: "✻ Thinking…",
     section: "· ",
+    assistant: "⏺ ",
+    result: "  ⎿  ",
+    promptRail: "❯",
     shell: (command) => `⏺ Bash(${command})`,
     spinner: "✻",
     splashMark: "⏺",
@@ -55,6 +67,9 @@ export function presetStyle(name: MiniPreset | undefined, mono = false): PresetS
     user: ">",
     thinking: style.name === "claude" ? "Thinking:" : style.thinking,
     section: style.name === "claude" ? "* " : style.section,
+    assistant: style.name === "claude" ? ">" : style.assistant,
+    result: style.name === "claude" ? "|" : style.result,
+    promptRail: style.name === "claude" ? ">" : "|",
     shell: (command) => `$ ${command}`,
     spinner: "*",
     splashMark: "[O]",

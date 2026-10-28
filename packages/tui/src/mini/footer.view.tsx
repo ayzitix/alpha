@@ -766,6 +766,7 @@ export function RunFooterView(props: RunFooterViewProps) {
                             cursorStyle={props.tuiConfig.cursor}
                             background={() => runTheme().background}
                             rail={() => (shell() ? theme().formfieldFocusedText : agentColor())}
+                            railGlyph={presetStyle(props.miniSettings().preset, props.mono).promptRail}
                             mono={props.mono}
                             placeholder={composer.placeholder}
                             onSubmit={composer.onSubmit}

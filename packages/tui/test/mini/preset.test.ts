@@ -10,6 +10,9 @@ describe("mini presets", () => {
     expect(style.shell("git status")).toBe("$ git status")
     expect(style.spinner).toBe("▪")
     expect(style.summary).toBe("")
+    expect(style.assistant).toBe("")
+    expect(style.result).toBe("")
+    expect(style.promptRail).toBe("┃")
   })
 
   test("claude swaps glyphs without touching layout", () => {
@@ -21,6 +24,9 @@ describe("mini presets", () => {
     expect(style.spinner).toBe("✻")
     expect(style.splashMark).toBe("⏺")
     expect(style.summary).toBe("✻ ")
+    expect(style.assistant).toBe("⏺ ")
+    expect(style.result).toBe("  ⎿  ")
+    expect(style.promptRail).toBe("❯")
   })
 
   test("mono degrades every preset to ASCII", () => {
@@ -32,6 +38,9 @@ describe("mini presets", () => {
       expect(style.spinner).toBe("*")
       expect(style.splashMark).toBe("[O]")
       expect(style.summary).toBe("")
+      expect(style.assistant).toBe(name === "claude" ? ">" : "")
+      expect(style.result).toBe(name === "claude" ? "|" : "")
+      expect(style.promptRail).toBe(name === "claude" ? ">" : "|")
     }
     expect(presetStyle("claude", true).section).toBe("* ")
   })

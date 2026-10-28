@@ -211,6 +211,7 @@ export function RunPromptBody(props: {
   theme: () => RunFooterTheme
   background: () => ColorInput
   rail: () => ColorInput
+  railGlyph?: string
   mono: boolean
   cursorStyle: RunTuiConfig["cursor"]
   placeholder: () => StyledText | string
@@ -270,7 +271,7 @@ export function RunPromptBody(props: {
       <box
         border={["left"]}
         borderColor={props.rail()}
-        customBorderChars={{ ...EmptyBorder, vertical: props.mono ? "|" : "┃" }}
+        customBorderChars={{ ...EmptyBorder, vertical: props.railGlyph ?? (props.mono ? "|" : "┃") }}
         paddingLeft={1}
         paddingRight={2}
         onSizeChange={props.onSizeChange}

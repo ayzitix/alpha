@@ -267,6 +267,9 @@ Unknown commands are rejected by the server with `Command.NotFoundError`.
 | footer spinner | `▪` | `✻` |
 | splash mark | `▪ alpha` | `⏺ alpha` |
 | turn summary | `alpha · model · 1s` | `✻ alpha · model · 1s` |
+| assistant gutter | — | `⏺ ` |
+| tool result gutter | — | `  ⎿  ` |
+| composer rail | `┃` | `❯` |
 
 Config only (not yet in the `/settings` panel), requires a restart:
 
@@ -276,6 +279,11 @@ Config only (not yet in the `/settings` panel), requires a restart:
 
 Mono mode always wins: every preset degrades to ASCII (`>`, `Thinking:`,
 `$ cmd`, `*`, `[O]`).
+
+The gutter is applied once per entry by `RunScrollbackStream.gutter()`, after
+the commit is grouped into an entry. Known gaps: wrapped lines are not hanging
+indented yet, and a streamed entry whose first chunk is a heading/table/list
+skips the bullet instead of moving it to the first paragraph.
 
 Demo mode (`alpha --demo`) adds frontend-only `/help`, `/permission`,
 `/form`, `/fmt` fixtures in `mini/demo.ts`; they do not exist in a normal
