@@ -55,6 +55,13 @@ The CLI is a client: it talks to a local server over HTTP + SSE. `--standalone`
 runs that server privately; the default reuses one shared background service per
 user.
 
+## Docs
+
+- [`docs/CODEBASE.md`](./docs/CODEBASE.md) — what every package, command and
+  mini module does, plus a "where to change what" table.
+- [`docs/EXPORTS.md`](./docs/EXPORTS.md) — every export in `packages/cli` and
+  `packages/tui/src/mini` (regenerate with `bun run script/gen-exports.ts`).
+
 ## Tests
 
 ```bash
