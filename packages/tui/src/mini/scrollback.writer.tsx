@@ -14,7 +14,7 @@ import { entryBody, entryFlags } from "./entry.body"
 import { monoMarkdownRenderable, monoMarkdownTableOptions } from "./mono"
 import { presetStyle } from "./preset"
 import { entryColor, entryLook, entrySyntax } from "./scrollback.shared"
-import { toolFiletype, toolStructuredFinal } from "./tool"
+import { claudeToolStart, toolFiletype, toolStructuredFinal } from "./tool"
 import { RUN_THEME_FALLBACK, transparent, type RunTheme } from "./theme"
 import type { EntryLayout, MiniPreset, RunEntryBody, ScrollbackOptions, StreamCommit, TurnSummary } from "./types"
 import { todoMarker } from "../util/todo"
@@ -93,6 +93,7 @@ export function RunEntryContent(props: {
   const theme = createMemo(() => props.theme ?? RUN_THEME_FALLBACK)
   const body = createMemo(() => props.body ?? entryBody(props.commit, props.opts))
   const preset = createMemo(() => presetStyle(props.opts?.preset, props.opts?.mono === true))
+  const heading = (value: string) => (preset().name === "claude" ? claudeToolStart(value) : value)
   const style = createMemo(() => entryLook(props.commit, theme().entry))
   const syntax = () => theme().block.syntax ?? (fallback ??= entrySyntax(RUN_THEME_FALLBACK, renderer.nativeScene))
   onCleanup(() => {
@@ -179,7 +180,7 @@ export function RunEntryContent(props: {
       <Match when={code_snapshot()}>
         <box width="100%" flexDirection="column" gap={1}>
           <text width="100%" wrapMode="word" fg={theme().block.muted}>
-            {code_snapshot()!.title}
+            {heading(code_snapshot()!.title)}
           </text>
           <box width="100%" paddingLeft={1}>
             <line_number width="100%" fg={theme().block.muted} minWidth={3} paddingRight={1}>
@@ -239,7 +240,7 @@ export function RunEntryContent(props: {
       <Match when={task_snapshot()}>
         <box width="100%" flexDirection="column" gap={1}>
           <text width="100%" wrapMode="word" fg={theme().block.muted}>
-            {task_snapshot()!.title}
+            {heading(task_snapshot()!.title)}
           </text>
           <box width="100%" flexDirection="column" gap={0} paddingLeft={1}>
             {task_snapshot()!.rows.map((row) => (

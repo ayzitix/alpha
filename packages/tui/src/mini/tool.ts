@@ -1377,7 +1377,39 @@ export function toolEntryBody(
     }
   }
 
-  return textBody(toolScroll(commit.phase, ctx))
+  const body = toolScroll(commit.phase, ctx)
+  return textBody(commit.phase === "start" && options?.preset === "claude" ? claudeToolStart(body) : body)
+}
+
+// Claude Code renders a tool call as `⏺ Verb(target)` instead of the legacy
+// `# Wrote path` / `⚙ tool` markers.
+export function claudeToolStart(text: string): string {
+  const [head, ...rest] = text.split("\n")
+  if (head === undefined) return text
+  const tail = rest.length > 0 ? "\n" + rest.join("\n") : ""
+  const subagent = head.match(/^#\s+(.+?)\s+Subagent\.?$/)
+  if (subagent) return `⏺ Task(${subagent[1]})${tail}`
+  const hash = head.match(/^#\s+([A-Za-z][\w-]*)(?:\s+(.*))?$/)
+  if (hash) {
+    const verbs: Record<string, string> = {
+      wrote: "Write",
+      created: "Write",
+      edited: "Edit",
+      deleted: "Delete",
+      patched: "Patch",
+      moved: "Move",
+      listed: "List",
+    }
+    const verb = verbs[hash[1]!.toLowerCase()] ?? hash[1]!
+    const args = hash[2]?.trim()
+    return `⏺ ${verb}${args ? `(${args})` : ""}${tail}`
+  }
+  const gear = head.match(/^\u2699\s+([^\s]+)(?:\s+(.*))?$/)
+  if (gear) {
+    const args = gear[2]?.trim()
+    return `⏺ ${gear[1]}${args ? `(${args})` : ""}${tail}`
+  }
+  return text
 }
 
 export function toolFiletype(input?: string): string | undefined {

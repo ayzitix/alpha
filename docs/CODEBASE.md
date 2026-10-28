@@ -290,9 +290,14 @@ agent, model) on the left, telemetry and actions (context, provider, cost,
 menu) on the right, separated by a flex spacer. When the two halves do not fit,
 the row falls back to the single wrapping line used by the default preset.
 
-Still open: tool action lines still use the legacy `$ cmd` / `# Wrote` markers
-(only shell calls got `⏺ Bash(...)`), there is no dim rule around the composer,
-and thinking is not an inline spinner while streaming.
+Tool calls render as `⏺ Verb(target)` (`Write`, `Edit`, `Delete`, `Patch`,
+`Task(...)`, `Bash(...)`) for both text and structured snapshots; the legacy
+`# Wrote path` / `⚙ tool` markers are mapped by `claudeToolStart` in
+`mini/tool.ts`.
+
+Still open: structured tool results (diffs, code blocks) do not get the
+`  ⎿  ` gutter yet, there is no dim rule around the composer, and thinking is
+not an inline spinner while streaming.
 
 Demo mode (`alpha --demo`) adds frontend-only `/help`, `/permission`,
 `/form`, `/fmt` fixtures in `mini/demo.ts`; they do not exist in a normal
